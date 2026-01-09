@@ -1,91 +1,54 @@
-# 🔐 RFID Laser Security System  
-### Complete Wiring & Setup Guide (Arduino UNO)
+# RFID Laser Security System - Complete Wiring & Setup Guide
 
----
+## Wiring Instructions (Using Breadboard)
 
-## 📦 Wiring Instructions (Using Breadboard)
+### Breadboard Power Rails Setup:
+Connect Arduino 5V to breadboard positive (+) rail (red)  
+Connect Arduino 3.3V to a separate row on breadboard (for RFID only)  
+Connect Arduino GND to breadboard negative (-) rail (blue/black)  
 
-### 🔌 Breadboard Power Rails Setup
-- **Arduino 5V** → Breadboard **positive (+) rail** (red)
-- **Arduino 3.3V** → Separate breadboard row (**for RFID only**)
-- **Arduino GND** → Breadboard **negative (-) rail** (blue/black)
+### MFRC522 RFID Reader:
+SDA → Arduino Pin 10 (direct connection or via breadboard)  
+SCK → Arduino Pin 13 (direct connection or via breadboard)  
+MOSI → Arduino Pin 11 (direct connection or via breadboard)  
+MISO → Arduino Pin 12 (direct connection or via breadboard)  
+IRQ → (leave unconnected)  
+GND → Breadboard GND rail (-)  
+RST → Arduino Pin 9 (direct connection or via breadboard)  
+3.3V → Breadboard 3.3V row (IMPORTANT: Use 3.3V, NOT 5V!)  
 
----
+### LCD1602 I2C Display:
+GND → Breadboard GND rail (-)  
+VCC → Breadboard 5V rail (+)  
+SDA → Arduino A4 (direct connection or via breadboard)  
+SCL → Arduino A5 (direct connection or via breadboard)  
 
-## 📡 MFRC522 RFID Reader
-| RFID Pin | Arduino Pin |
-|--------|-------------|
-| SDA    | Pin **10** |
-| SCK    | Pin **13** |
-| MOSI   | Pin **11** |
-| MISO   | Pin **12** |
-| IRQ    | *Not connected* |
-| RST    | Pin **9** |
-| GND    | Breadboard **GND (-)** |
-| 3.3V   | Breadboard **3.3V row** ⚠️ **(NOT 5V!)** |
+### KY-008 Laser Module:
+S (Signal) → Arduino Pin 3 (direct connection or via breadboard)  
+Middle pin (+) → Breadboard 5V rail (+)  
+- (GND) → Breadboard GND rail (-)  
 
----
+### LDR Photosensitive Sensor:
+VCC → Breadboard 5V rail (+)  
+GND → Breadboard GND rail (-)  
+DO or AO (Analog Out) → Arduino A0 (direct connection or via breadboard)  
 
-## 🖥️ LCD1602 I2C Display
-| LCD Pin | Arduino Pin |
-|-------|-------------|
-| GND   | Breadboard **GND (-)** |
-| VCC   | Breadboard **5V (+)** |
-| SDA   | **A4** |
-| SCL   | **A5** |
+### Active Buzzer:
+Positive (+) or I/O → Arduino Pin 8 (direct connection or via breadboard)  
+Negative (-) or GND → Breadboard GND rail (-)  
 
----
+## Setup Instructions
 
-## 🔴 KY-008 Laser Module
-| Laser Pin | Arduino Pin |
-|---------|-------------|
-| S (Signal) | Pin **3** |
-| + (Middle Pin) | Breadboard **5V (+)** |
-| - (GND) | Breadboard **GND (-)** |
+### Step 1: Install Required Libraries
+In Arduino IDE:  
+Go to Sketch → Include Library → Manage Libraries  
+Search and install: "MFRC522" by GithubCommunity  
+Search and install: "LiquidCrystal I2C" by Frank de Brabander  
 
----
-
-## 🌞 LDR Photosensitive Sensor
-| LDR Pin | Arduino Pin |
-|--------|-------------|
-| VCC    | Breadboard **5V (+)** |
-| GND    | Breadboard **GND (-)** |
-| AO / DO | **A0** |
-
----
-
-## 🔊 Active Buzzer
-| Buzzer Pin | Arduino Pin |
-|-----------|-------------|
-| + / I/O   | Pin **8** |
-| - / GND   | Breadboard **GND (-)** |
-
----
-
-## ⚙️ Setup Instructions
-
-### 🧩 Step 1: Install Required Libraries
-In **Arduino IDE**:
-1. Go to **Sketch → Include Library → Manage Libraries**
-2. Install:
-   - **MFRC522** by *GithubCommunity*
-   - **LiquidCrystal I2C** by *Frank de Brabander*
-
----
-
-### 💻 Step 2: Upload the Code
-1. Connect **Arduino UNO** via USB  
-2. Copy the project code  
-3. Paste into **Arduino IDE**  
-4. Select:
-   - **Tools → Board → Arduino UNO**
-   - **Tools → Port → (Your COM Port)**
-5. Click **Upload**
-
----
-
-### 🆔 Step 3: Get Your RFID Card UIDs
-1. Open **Serial Monitor**
-2. Set **Baud Rate: 9600**
-3. Scan RFID cards near the reader  
-4. Note UID shown in Serial Monitor  
+### Step 2: Upload the Code
+Connect your Arduino UNO to your computer via USB  
+Copy the code from the Arduino Code artifact  
+Paste it into Arduino IDE  
+Select Tools → Board → Arduino UNO  
+Select Tools → Port → (your Arduino's COM port)  
+Click Upload (arrow button)  
