@@ -1,0 +1,185 @@
+#include <SPI.h>
+#include <MFRC522.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+// Pin Definitions
+#define RST_PIN 9
+#define SS_PIN 10
+#define LASER_PIN 3
+#define LDR_PIN A0
+#define BUZZER_PIN 8
+
+// Initialize RFID
+MFRC522 rfid(SS_PIN, RST_PIN);
+
+// Initialize LCD (address 0x27, 16 chars, 2 rows)
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+// System Variables
+bool systemArmed = false;
+bool alarmTriggered = false;
+int ldrThreshold = 500; // Adjust based on your environment
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 2000; // 2 second delay to prevent rapid toggling
+
+// Authorized RFID UIDs (change these to match your cards)
+byte authorizedUID1[] = {0xDE, 0xAD, 0xBE, 0xEF};
+byte authorizedUID2[] = {0xCA, 0xFE, 0xBA, 0xBE};
+
+void setup() {
+  Serial.begin(9600);
+  SPI.begin();
+  rfid.PCD_Init();
+  
+  // Initialize LCD
+  lcd.init();
+  lcd.backlight();
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Security System");
+  lcd.setCursor(0, 1);
+  lcd.print("Initializing...");
+  delay(2000);
+  
+  // Setup pins
+  pinMode(LASER_PIN, OUTPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+  pinMode(LDR_PIN, INPUT);
+  
+  // Turn off buzzer initially
+  digitalWrite(BUZZER_PIN, LOW);
+  
+  // Display initial state
+  updateDisplay();
+  
+  Serial.println("System Ready");
+}
+
+void loop() {
+  // Check for RFID card
+  if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
+    // Debounce RFID reads
+    if (millis() - lastDebounceTime > debounceDelay) {
+      lastDebounceTime = millis();
+      
+      if (checkAuthorization()) {
+        toggleSystem();
+      } else {
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Access Denied!");
+        digitalWrite(BUZZER_PIN, HIGH);
+        delay(500);
+        digitalWrite(BUZZER_PIN, LOW);
+        delay(1500);
+        updateDisplay();
+      }
+    }
+    
+    rfid.PICC_HaltA();
+    rfid.PCD_StopCrypto1();
+  }
+  
+  // If system is armed, monitor the laser beam
+  if (systemArmed && !alarmTriggered) {
+    int ldrValue = analogRead(LDR_PIN);
+    Serial.print("LDR Value: ");
+    Serial.println(ldrValue);
+    
+    // If laser beam is broken (LDR value drops)
+    if (ldrValue < ldrThreshold) {
+      triggerAlarm();
+    }
+  }
+  
+  // Handle alarm state
+  if (alarmTriggered) {
+    // Beep pattern for alarm
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(200);
+    digitalWrite(BUZZER_PIN, LOW);
+    delay(200);
+  }
+  
+  delay(100);
+}
+
+bool checkAuthorization() {
+  // Check if scanned card matches authorized UIDs
+  if (compareUID(authorizedUID1) || compareUID(authorizedUID2)) {
+    return true;
+  }
+  return false;
+}
+
+bool compareUID(byte* uid) {
+  for (byte i = 0; i < 4; i++) {
+    if (rfid.uid.uidByte[i] != uid[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+void toggleSystem() {
+  systemArmed = !systemArmed;
+  alarmTriggered = false;
+  
+  if (systemArmed) {
+    digitalWrite(LASER_PIN, HIGH); // Turn on laser
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("System Armed");
+    lcd.setCursor(0, 1);
+    lcd.print("Laser Active");
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(100);
+    digitalWrite(BUZZER_PIN, LOW);
+    Serial.println("System ARMED");
+  } else {
+    digitalWrite(LASER_PIN, LOW); // Turn off laser
+    digitalWrite(BUZZER_PIN, LOW); // Turn off alarm
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("System Disabled");
+    lcd.setCursor(0, 1);
+    lcd.print("Laser Off");
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(100);
+    digitalWrite(BUZZER_PIN, LOW);
+    delay(100);
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(100);
+    digitalWrite(BUZZER_PIN, LOW);
+    Serial.println("System DISARMED");
+  }
+  
+  delay(2000);
+  updateDisplay();
+}
+
+void triggerAlarm() {
+  alarmTriggered = true;
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("!!! ALARM !!!");
+  lcd.setCursor(0, 1);
+  lcd.print("Breach Detected");
+  Serial.println("ALARM! Laser beam broken!");
+}
+
+void updateDisplay() {
+  lcd.clear();
+  if (systemArmed) {
+    lcd.setCursor(0, 0);
+    lcd.print("System Armed");
+    lcd.setCursor(0, 1);
+    lcd.print("Monitoring...");
+  } else {
+    lcd.setCursor(0, 0);
+    lcd.print("System Disabled");
+    lcd.setCursor(0, 1);
+    lcd.print("Scan RFID");
+  }
+}
